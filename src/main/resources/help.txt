@@ -1,0 +1,170 @@
+
+Workflow Management :-- 
+		
+[1] wf_defn: Each workflow is defined with a unique name.
+		
+		###############
+		Table_Schema:-- wf_defn
+		############### 
+		
+		 id[PK]
+		 name
+		 description
+		 created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c         
+
+
+[2] wf_tasks: Here, we will record all tasks which will be performed in a workflow. This will tell how many tasks are involved into a workflow. 
+		     As per business, we have approval and cancel at four levels. So, we will define all four approval and cancel differently. 
+		     The request can be canceled at any level.But once the request is canceled, the workflow will be assumed to be completed 
+		     with a cancel state.Its next state will not be executed.  
+		          
+		###############
+		Table_Schema:-- wf_tasks
+		###############          
+		 id[PK]
+		 name => maker_approval, checker_approval, cxo_approval, hod_approval,
+		         cancel	
+		 description		
+		 created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c 
+
+  
+ [3] wf_tasks_maps: A workflow is composed of multiple tasks and they should be executed in a pre-defined sequence. Here, the combination
+                    of task_seq,wf_task_id and wflow_id must be unique within the table. We will record all tasks of each workflow.
+          
+		 ###############         
+		 Table_Schema:-- wf_tasks_maps
+		 ###############
+		 
+		 id[PK]
+		 name		 
+		 wf_task-id[FK] => wf_tasks
+		 task_seq => seq-for-cancel=0,seq-for-maker_approval=1, seq-for-checker_approval-2, seq-for-cxo_approval=3, seq-for-hod_approval=4
+		         	
+		 wflow_id [FK] => wf_defn
+		 created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c
+		 
+		 Remark: The composition of task-seq,wf_task-id and worrflow_id should always be of unique nature.
+		       
+
+
+[4] request_state: A request can go under multiple states. Here, we will define different possible states of a request. We will define
+                   all possible states of a request in this table. This data will be used while recording request data.                    
+
+         ###############         
+		 Table_Schema:-- request_state
+		 ###############                 
+         id[PK] 
+         name => Pending/Processing/Completed/Canceled
+         description                       
+         created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c
+		 
+########## Processing ################
+
+[5] wf_requests: When a request of a workflow is submitted, this table will be filled with its pending state first. After each transition of 
+                 of a request of a a workflow, this table will be updated with its request state. This will help you to know what is the current
+                 status of a request within its workflow.
+
+         #############################         
+		 Table_Schema:-- wf_requests
+		 #############################
+         id[PK]
+         title              
+         wflow_id [FK]
+         cur_request_state_id[FK]=> request_state [Pending/Processing/Completed/Canceled]
+         created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c
+		 
+[6] request_stakeholders: Who are the stake-holders of different tasks of a request in a workflow? Now, we will prepare a list of 
+                          request_stakeholders who will perform different assigned tasks of a workflow on a request. But this will be defined
+                          over a role not on a user. So, here we will tell which task of a workflow will be performed by which role. In our 
+                          business there are four possible approval and four cancel by four roles. 
+                          The cancel will be performed by one role only. Once, the cancel takes place, the workflow will be considered canceled. 
+     
+     ######################################         
+	  Table_Schema:-- request_stakeholders
+	 ######################################
+	 
+	     id[Pk]	     
+	     role_id[FK]=>role_master [maker, checker, cxo, hod]
+	     wf_request_id[FK]=>wf_requests	    
+	     created_by[FK]=>user_master
+		 created_on
+		 modified_by[FK]=>user_master
+		 modified_on 
+		 active_c		 
+    Remark: Here, role_id and request_id should always be unique so that one request of a workflow could be assigned to one role only.
+    
+[6] request_data: This is a set of data of a request which participates in a workflow. There is always a single record in the table 
+                  corresponding to each request participating in a workflow. Each record of this table tells us the following
+                 
+     [i.] It will tell you to which workflow it belongs to. [ ii.] What is the current state of a request?
+     
+     It will be updated when state of a request [i.e. Pending/Processing/Completed/Canceled ] is changed. This table can be used for 
+     knowing the current state of a request in the workflow.
+              
+         #############################         
+		 Table_Schema:-- request_data
+		 #############################
+         id[PK]         
+         request_id[FK]  
+         request_state_id[FK]=>request_state 
+         created_by[FK]=>user_master
+		 created_on
+		 modified_by[FK]=>user_master
+		 modified_on 
+		 active_c
+		 
+     Remark: 
+     
+		 
+[6] wf_transition: When a workflow for a request is processed, it may go through multiple stages. These stages can be considered as different
+                   transitions for a workflow, and they need to be recorded so that we can come to know the tasks-status-details of a workflow i.e 
+                                      
+     ######################################         
+	  Table_Schema:-- wf_transition
+	 ######################################
+         id[Pk]
+         wflow_id[FK]
+         cur_state_id [FK]
+         nxt_state_id [FK]         
+         created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c	
+
+Remark: 
+
+[7] task_transition: It governs how each request has be handled.
+
+         ################################         
+		 Table_Schema:-- task_transition
+		 ################################
+		 
+		 id[PK]
+		 task_id[FK]
+		 transition_id[FK]		 
+		 created_by[FK]
+		 created_on
+		 modified_by[FK]
+		 modified_on 
+		 active_c
